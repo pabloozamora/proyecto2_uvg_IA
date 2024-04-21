@@ -40,18 +40,25 @@ class ReflexAgent(Agent):
         """
         # Collect legal moves and child states
         legalMoves = gameState.getLegalActions()
+        currentPos = gameState.getPacmanPosition()
 
         # Choose one of the best actions
-        scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
+        scores = [self.evaluationFunction(gameState, action, currentPos) for action in legalMoves]
         bestScore = max(scores)
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
+        
         chosenIndex = random.choice(bestIndices) # Pick randomly among the best
+        
+        '''for currentIndex in bestIndices:
+            nextAction = legalMoves[currentIndex]
+            gameState.getPacmanNextState(nextAction)'''
+            
 
         "Add more of your code here if you want to"
 
         return legalMoves[chosenIndex]
 
-    def evaluationFunction(self, currentGameState, action):
+    def evaluationFunction(self, currentGameState, action, currentPos):
         """
         Design a better evaluation function here.
 
@@ -72,9 +79,38 @@ class ReflexAgent(Agent):
         newFood = childGameState.getFood()
         newGhostStates = childGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        
+        ''' --- PROYECTO --- '''
+        newFoodList = newFood.asList()
+        '''print(f'childGameState: {childGameState}')
+        print(f'newPos: {newPos}')
+        print(f'newFoodList: {newFoodList}')
+        print(f'newSacaredTimes: {newScaredTimes}')'''
 
         "*** YOUR CODE HERE ***"
-        return childGameState.getScore()
+        score = 0
+        minDistance = 999999999
+        
+        for state in newGhostStates:
+            if state.scaredTimer == 0 and state.getPosition() == tuple(newPos):
+                return -999999999 # Penalizar la acción lleva a la posición de un fantasma
+        
+        foodDistance = [manhattanDistance(newPos, foodPosition) for foodPosition in newFoodList] # Encontrar la distancia desde PacMan hacia cada comida
+        
+        if len(foodDistance): # Verificar que la lista de comida faltante no esté vacía (Es decir, que no se ha acabado el juego)
+            minDistance = min(foodDistance)
+        
+        # Proprocionalidad inversa entre el max_score y distancia Manhattan mínima y penalizar las posiciones que se alejan de la comida
+        score = (10.0 / minDistance) - 40 * len(foodDistance)
+        
+        if newPos in newFoodList: score += 10 # Despenalizar si en la siguiente posición se encuentra comida
+                
+        if newPos == currentPos: score -= 100 # Penalizar regresar a la posición anterior (Evitar ciclos)
+
+        if action == 'Stop':
+            score -= 20 # Penalizar la acción Stop
+        
+        return score
 
 def scoreEvaluationFunction(currentGameState):
     """
