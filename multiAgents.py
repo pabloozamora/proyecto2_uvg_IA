@@ -81,13 +81,14 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
         
         ''' --- PROYECTO --- '''
+        "*** YOUR CODE HERE ***"
+        
         newFoodList = newFood.asList()
         '''print(f'childGameState: {childGameState}')
         print(f'newPos: {newPos}')
         print(f'newFoodList: {newFoodList}')
         print(f'newSacaredTimes: {newScaredTimes}')'''
-
-        "*** YOUR CODE HERE ***"
+        
         score = 0
         minDistance = 999999999
         
@@ -170,8 +171,65 @@ class MinimaxAgent(MultiAgentSearchAgent):
         gameState.isLose():
         Returns whether or not the game state is a losing state
         """
+        ''' --- PROYECTO --- '''
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+        bestAction = self.maxScore(gameState=gameState, depth=0, agentIndex=0)[1]
+        return bestAction
+        
+    def isTerminalState(self, gameState, depth, agentIndex):
+        
+        '''Función helper para determinar si el nodo actual del árbol es terminal'''
+        
+        if gameState.isWin(): return gameState.isWin()
+        elif gameState.isLose(): return gameState.isLose()
+        elif len(gameState.getLegalActions(agentIndex)) == 0: return True
+        elif depth >= self.depth * gameState.getNumAgents(): return True # self.depth cuenta como un movimiento de PacMan y cada fantasma, por lo que se multiplica por el numAgents
+        
+    def maxScore(self, gameState, depth, agentIndex):
+        
+        '''Función helper para determinar el máximo valor posible de un nodo'''
+        
+        max_score = (-999999, None)
+        legalActions = gameState.getLegalActions(agentIndex) # Obtener las posibles acciones para el agente actual
+        for action in legalActions:
+            childGameState = gameState.getNextState(agentIndex, action) # Obtener el siguiente estado del juego
+            numAgents = gameState.getNumAgents()
+            nextDepth = depth + 1 # Expandir al siguiente nivel de profunidad
+            nextAgent = nextDepth % numAgents # Determinar el agente según el nivel de profundidad
+            max_score = max([max_score, (self.minimax(childGameState, nextDepth, nextAgent), action)], key=lambda index: index[0]) # Recursividad para obtener el máximo valor posible en el nodo actual
+        
+        return max_score
+    
+    def minScore(self, gameState, depth, agentIndex):
+        
+        '''Función helper para determinar el mínimo valor posible de un nodo'''
+        
+        min_score = (999999, None)
+        legalActions = gameState.getLegalActions(agentIndex) # Obtener las posibles acciones para el agente actual
+        for action in legalActions:
+            childGameState = gameState.getNextState(agentIndex, action) # Obtener el siguiente estado del juego
+            numAgents = gameState.getNumAgents()
+            nextDepth = depth + 1 # Expandir al siguiente nivel de profunidad
+            nextAgent = nextDepth % numAgents # Determinar el agente según el nivel de profundidad
+            min_score = min([min_score, (self.minimax(childGameState, nextDepth, nextAgent), action)], key=lambda index: index[0]) # Recursividad para obtener el máximo valor posible en el nodo actual
+        
+        return min_score
+    
+    def minimax(self, gameState, depth, agentIndex):
+        
+        ''' Función recursiva que determina si se debe calcular el máximo posible o mínimo posible dependiendo del agente (o regresar la utilidad en caso se trate de un nodo terminal) '''    
+        
+        if self.isTerminalState(gameState, depth, agentIndex): # Si se trata de un nodo terminal, devolver el score
+            return self.evaluationFunction(gameState)
+        
+        elif agentIndex == 0: # Si se trata de PacMan, determinar la máxima utilidad para el nodo actual
+            return self.maxScore(gameState, depth, agentIndex)[0]
+        
+        else: # Si se trata de un fantasma, determinar la mínima utilidad para el nodo actual
+            return self.minScore(gameState, depth, agentIndex)[0]
+        
+    
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
