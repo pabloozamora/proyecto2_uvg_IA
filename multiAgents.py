@@ -230,7 +230,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
             return self.minScore(gameState, depth, agentIndex)[0]
         
     
-
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
     Your minimax agent with alpha-beta pruning (question 3)
@@ -240,8 +239,80 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
+        ''' --- PROYECTO --- '''
+
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        alpha = -9999999
+        beta = 9999999
+        bestAction = self.maxScore(gameState=gameState, depth=0, agentIndex=0, alpha=alpha, beta=beta)[1]
+        return bestAction
+    
+    def isTerminalState(self, gameState, depth, agentIndex):
+        
+        '''Función helper para determinar si el nodo actual del árbol es terminal'''
+        
+        if gameState.isWin(): return gameState.isWin()
+        elif gameState.isLose(): return gameState.isLose()
+        elif len(gameState.getLegalActions(agentIndex)) == 0: return True
+        elif depth >= self.depth * gameState.getNumAgents(): return True # self.depth cuenta como un movimiento de PacMan y cada fantasma, por lo que se multiplica por el numAgents
+        
+    def maxScore(self, gameState, depth, agentIndex, alpha, beta):
+        
+        '''Función helper para determinar el máximo valor posible de un nodo'''
+        
+        max_score = (-999999, None)
+        legalActions = gameState.getLegalActions(agentIndex) # Obtener las posibles acciones para el agente actual
+        for action in legalActions:
+            childGameState = gameState.getNextState(agentIndex, action) # Obtener el siguiente estado del juego
+            numAgents = gameState.getNumAgents()
+            nextDepth = depth + 1 # Expandir al siguiente nivel de profunidad
+            nextAgent = nextDepth % numAgents # Determinar el agente según el nivel de profundidad
+            max_score = max([max_score, (self.minimax(childGameState, nextDepth, nextAgent, alpha, beta), action)], key=lambda index: index[0]) # Recursividad para obtener el máximo valor posible en el nodo actual
+
+            # Decidir si vale la pena seguir buscando. 
+            # Si α (max_score) >= β, parar, dado que se debe cumplir el rango [α, β]
+            if max_score[0] > beta:
+                return max_score
+            
+            # Reemplazar valor de α
+            alpha = max(max_score[0], alpha)
+        return max_score
+    
+    def minScore(self, gameState, depth, agentIndex, alpha, beta):
+        
+        '''Función helper para determinar el mínimo valor posible de un nodo'''
+        
+        min_score = (999999, None)
+        legalActions = gameState.getLegalActions(agentIndex) # Obtener las posibles acciones para el agente actual
+        for action in legalActions:
+            childGameState = gameState.getNextState(agentIndex, action) # Obtener el siguiente estado del juego
+            numAgents = gameState.getNumAgents()
+            nextDepth = depth + 1 # Expandir al siguiente nivel de profunidad
+            nextAgent = nextDepth % numAgents # Determinar el agente según el nivel de profundidad
+            min_score = min([min_score, (self.minimax(childGameState, nextDepth, nextAgent, alpha, beta), action)], key=lambda index: index[0]) # Recursividad para obtener el máximo valor posible en el nodo actual
+            
+            # Decidir si vale la pena seguir buscando. 
+            # Si β (max_score) <= α, parar, dado que se debe cumplir el rango [α, β]
+            if min_score[0] < alpha:
+                return min_score
+            
+            # Reemplazar valor de β
+            beta = min(min_score[0], beta)
+
+        return min_score
+    
+    def minimax(self, gameState, depth, agentIndex, alpha, beta):
+        ''' Función recursiva que determina si se debe calcular el máximo posible o mínimo posible dependiendo del agente (o regresar la utilidad en caso se trate de un nodo terminal) '''    
+        
+        if self.isTerminalState(gameState, depth, agentIndex): # Si se trata de un nodo terminal, devolver el score
+            return self.evaluationFunction(gameState)
+        
+        elif agentIndex == 0: # Si se trata de PacMan, determinar la máxima utilidad para el nodo actual
+            return self.maxScore(gameState, depth, agentIndex, alpha, beta)[0]
+        
+        else: # Si se trata de un fantasma, determinar la mínima utilidad para el nodo actual
+            return self.minScore(gameState, depth, agentIndex, alpha, beta)[0]
+        
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
