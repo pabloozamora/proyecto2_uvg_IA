@@ -327,7 +327,59 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        bestAction = self.maxScore(gameState=gameState, depth=0, agentIndex=0)[1]
+        return bestAction
+    
+    def isTerminalState(self, gameState, depth, agentIndex):
+        
+        '''Función helper para determinar si el nodo actual del árbol es terminal'''
+        
+        if gameState.isWin(): return gameState.isWin()
+        elif gameState.isLose(): return gameState.isLose()
+        elif len(gameState.getLegalActions(agentIndex)) == 0: return True
+        elif depth >= self.depth * gameState.getNumAgents(): return True
+    
+    def maxScore(self, gameState, depth, agentIndex):
+        
+        '''Función helper para determinar el máximo valor posible de un nodo'''
+        
+        max_score = (-999999, None)
+        legalActions = gameState.getLegalActions(agentIndex) # Obtener las posibles acciones para el agente actual
+        for action in legalActions:
+            childGameState = gameState.getNextState(agentIndex, action) # Obtener el siguiente estado del juego
+            numAgents = gameState.getNumAgents()
+            nextDepth = depth + 1 # Expandir al siguiente nivel de profunidad
+            nextAgent = nextDepth % numAgents # Determinar el agente según el nivel de profundidad
+            max_score = max([max_score, (self.expectimax(childGameState, nextDepth, nextAgent), action)], key=lambda index: index[0]) # Recursividad para obtener el máximo valor posible en el nodo actual
+        
+        return max_score
+    
+    def expScore(self, gameState, depth, agentIndex):
+        
+        '''Funcion helper para determinar el valor esperado de un nodo'''
+        
+        legalActions = gameState.getLegalActions(agentIndex) # Obtener las posibles acciones para el agente actual
+        sum_score = 0 # Suma total de los scores esperados
+        for action in legalActions:
+            childGameState = gameState.getNextState(agentIndex, action) # Obtener el siguiente estado del juego
+            numAgents = gameState.getNumAgents()
+            nextDepth = depth + 1 # Expandir al siguiente nivel de profunidad
+            nextAgent = nextDepth % numAgents # Determinar el agente según el nivel de profundidad
+            sum_score += self.expectimax(childGameState, nextDepth, nextAgent) # Sumatoria de todos los posibles scores para el nodo actual
+        return sum_score / len(legalActions) # Devolver el promedio de los scores, es decir, el valor esperado.
+    
+    def expectimax(self, gameState, depth, agentIndex):
+        
+        '''Función recursiva para determinar si calcular el valor máximo o esperado dependiendo del agente (o regresar la utilidad en caso se trate de un nodo terminal)'''	
+        
+        if self.isTerminalState(gameState, depth, agentIndex): # Si se trata de un nodo terminal, devolver el score
+            return self.evaluationFunction(gameState)
+        
+        elif agentIndex == 0: # Si se trata de PacMan, determinar la máxima utilidad para el nodo actual
+            return self.maxScore(gameState, depth, agentIndex)[0]
+        
+        else: # Si se trata de un fantasma, determinar la utilidad esperada para el nodo actual
+            return self.expScore(gameState, depth, agentIndex)
 
 def betterEvaluationFunction(currentGameState):
     """
