@@ -326,6 +326,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         All ghosts should be modeled as choosing uniformly at random from their
         legal moves.
         """
+        ''' --- PROYECTO --- '''
         "*** YOUR CODE HERE ***"
         bestAction = self.maxScore(gameState=gameState, depth=0, agentIndex=0)[1]
         return bestAction
